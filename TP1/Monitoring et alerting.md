@@ -52,53 +52,61 @@ $ curl http://10.1.1.2:19999 -s | head -n 7
 ## 3. Ajouter un check
 
 🌞 **Ajouter un check**
+```
+## All available configuration options, their descriptions and default values:
+## https://github.com/netdata/netdata/tree/master/src/go/plugin/go.d/modules/portcheck#readme
 
-- vérifier la disponibilité du port où le serveur web de `web.tp1.b1` est disponible
-- je veux voir la conf qu vous ajoutez dans le compte-rendu
-- n'oubliez pas de redémarrer Netdata pour que ça prenne effet
-- vous devriez voir dans l'interface Web que le port surveillé est disponible
-  - et même la latence
-  - le taux d'erreur
-  - etc
-  - le feu.
-- vous pouvez nommer le "job" : appelez le `WEB_web.tp1.b1`
-
-🌞 **Ajouter un check**
-
-- vérifier la disponibilité du port où le serveur SSH de `web.tp1.b1` est disponible
-- je veux voir votre conf dans le compte-rendu
-- n'oubliez pas de redémarrer Netdata pour que ça prenne effet
-- vous pouvez nommer le "job" : appelez le `SSH_web.tp1.b1`
+#jobs:
+# - name: job1
+#   host: 10.0.0.1
+#   ports: [23, 80, 8080]
+#
+# - name: job2
+#   host: 10.0.0.2
+#   ports: [22, 19999]
+jobs:
+  - name: WEB_web.tp1.b1
+    host: 10.1.1.1
+    ports:
+      - 12969
+  - name: SSH_web.tp1.b1
+    host: 10.1.1.1
+    ports:
+      - 22
+```
 
 ## 4. Ajouter des alertes
 
-Netdata supporte d'envoyer des alertes quand des seuils sont atteints.
-
-C'est automatiser un peu les bails, plut^pt que devoir rester devant l'interface toute la journée.
-
-Pour le TP, on va choisir un alerting via Discord : Netdata enverra un message dans le salon d'un serveur Discord à vous quand il y a une alerte.
-
 🌞 **Configurer l'alerting avec Discord**
-
-- suivre la [doc officielle](https://learn.netdata.cloud/docs/alerts-&-notifications/notifications/agent-dispatched-notifications/discord)
-- lisez bien les prérequis : il vous faut un ptit serveur Discord à vous, avec un webhook de créé
-
+```
+https://discord.com/api/webhooks/1313164325963431946/G8jNTb-iklSc5EfdkHQt7p2fxy7xifYkPXx3OK_r0f8Oewyy9N4JxmRLMHYebGPIKP0S
+```
 🌞 **Tester que ça fonctionne**
-
-- un peu plus bas sur la page de la doc, ils filent des commandes pour envoyer des alertes de test
-- vérifier que vous recevez bien les alertes de test sur votre serveur Discord
-
+```
+--- END received response ---
+RECEIVED HTTP RESPONSE CODE: 200
+time=2024-12-02T16:37:01.335+01:00 comm=alarm-notify.sh source=health level=info tid=14532 thread=alarm-notify msg_id=6db0018e83e34320ae2a659d78019fb7 node=monitoring.tp1.b1 instance=test.chart alert_id=1 alert_unique_id=1 alert=test_alarm alert_class=Test alert_recipient=nv alert_duration=1 alert_value=100 alert_value_old=90 alert_status=CLEAR alert_value_old=CRITICAL alert_units=units alert_summary="a test alarm" alert_info="this is a test alarm to verify notifications work" request="'/usr/libexec/netdata/plugins.d/alarm-notify.sh' 'nv' 'monitoring.tp1.b1' '1' '1' '3' '1733153819' 'test_alarm' 'test.chart' 'CLEAR' 'CRITICAL' '100' '90' '/usr/libexec/netdata/plugins.d/alarm-notify.sh' '1' '3' 'units' 'this is a test alarm to verify notifications work' 'new value' 'old value' 'evaluated expression' 'expression variable values' '0' '0' '' '' 'Test' 'command to edit the alarm=0=monitoring.tp1.b1' '' '' 'a test alarm' " msg="[ALERT NOTIFICATION]: sent discord notification to 'nv' for notification to 'nv' for transition from CRITICAL to CLEAR, of alert 'test_alarm' = 'new value', of instance 'test.chart', context '' on host 'monitoring.tp1.b1'"
+# OK
+```
 🌞 **Euh... tester que ça fonctionne pour de vrai**
 
-- surchargez la machine
-- genre y'a des commandes faites exprès (que ce soit pour surcharger le CPU, ou la RAM, ou remplir le disque, etc)
-- faites lui mal quoi
-- y'a plein d'alertes par défaut avec Netdata, ça devrait remonter
+# **A vérifier sur le discord**
 
 🌞 **Configurer une alerte quand le port du serveur Web ne répond plus**
-
-- si le copain `web.tp1.b1` n'héberge plue le site web on veut le savoir !
-
+```
+  GNU nano 5.6.1                         /etc/netdata/health.d/web_server_alert.conf                          Modified
+template: web_server_down
+      on: portcheck.WEB_web.tp1.b1
+    lookup: average -10s unaligned of availability
+     every: 10s
+      warn: $this < 1
+      crit: $this < 1
+     delay: down 10s
+    repeat: every 20s
+     units: %
+      info: Web server is down
+       to: nv
+```
 🌞 **Tester que ça fonctionne !**
 
 - en éteignant le serveur Web

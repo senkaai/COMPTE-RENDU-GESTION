@@ -1,0 +1,10 @@
+[Unit]
+Description=Service téléchargement vidéo YouTube
+
+[Service]
+Type=oneshot
+ExecStart=/opt/yt/yt-next-gen.sh /opt/yt/urls.txt
+User=yt
+
+[Install]
+WantedBy=multi-user.target
